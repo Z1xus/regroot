@@ -2,6 +2,12 @@
 name = "groot"
 version = "0.1.0"
 edition = "2021"
+description = "Walk in thee directories"
+authors = ["Community"]
+documentation = "https://github.com/rodrigorvsn/groot"
+license = "MIT"
+keywords = ["cli", "tree"]
+categories = ["cli", "tree"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
