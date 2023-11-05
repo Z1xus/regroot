@@ -1,42 +1,27 @@
-use std::{env, fs, io, path::PathBuf};
+use clap::Parser;
+use std::{io, path::PathBuf};
 
-fn list_directories(
+pub mod list_directories;
+use list_directories::list_directories;
+
+#[derive(Parser)]
+struct Args {
+    /// Path of where do you want to mount your tree
     path: PathBuf,
-    max_depth: usize,
-    current_depth: usize,
-    dir_path: &String,
-) -> io::Result<()> {
-    if current_depth <= max_depth {
-        for entry in fs::read_dir(path)? {
-            let entry = entry?;
-            let path = entry.path();
 
-            if path.is_dir() {
-                let dir = path.display().to_string();
-                let pure_dir = dir.trim_start_matches(dir_path);
-                let pure_dir = pure_dir
-                    .split("/")
-                    .nth(current_depth + 1)
-                    .unwrap_or(dir.as_str());
-
-                let symbol = "└─ ";
-
-                println!("{}{}{}", "   ".repeat(current_depth + 1), symbol, pure_dir);
-                list_directories(path, max_depth, current_depth + 1, dir_path).unwrap();
-            }
-        }
-    }
-
-    Ok(())
+    /// Depth of the tree
+    #[arg(short, long, default_value_t = 0)]
+    depth: usize,
 }
 
 fn main() -> io::Result<()> {
-    let args: Vec<String> = env::args().collect();
+    let args: Args = Args::parse();
 
-    let path = PathBuf::from(&args[1]);
-    let max_depth = args[2].parse::<usize>().unwrap_or(1);
+    let path = args.path;
+    let max_depth = args.depth;
+    let path_str = path.to_string_lossy().to_string();
 
-    list_directories(path, max_depth, 0, &args[1]).unwrap();
+    list_directories(path, max_depth, 0, &path_str).unwrap();
 
     Ok(())
 }
