@@ -15,13 +15,13 @@ fn list_directories(
             if path.is_dir() {
                 vector.push(path.clone());
                 println!(
-                    "|{}-{}",
+                    "|{}{}",
                     "-".repeat(current_depth * 3),
                     path.display()
                         .to_string()
                         .trim_start_matches(dir_path)
-                        .splitn(current_depth + 1, "/")
-                        .nth(1)
+                        .split("/")
+                        .nth(current_depth + 1)
                         .unwrap_or(path.display().to_string().as_str())
                 );
                 list_directories(vector, path, max_depth, current_depth + 1, dir_path);
