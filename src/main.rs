@@ -1,27 +1,43 @@
 use clap::Parser;
 use std::{io, path::PathBuf};
+use glob::Pattern;
 
 pub mod list_directories;
 use list_directories::list_directories;
 
 #[derive(Parser)]
 struct Args {
-    /// Path of where do you want to mount your tree
-    path: PathBuf,
+    /// Path of where do you want to mount your tree. Now with glob support! "src/{bin,lib}/*"
+    path: String,
 
     /// Depth of the tree
     #[arg(short, long, default_value_t = 0)]
     depth: usize,
+
+    /// Patterns to ignore (e.g., "node_modules", "*.pyc")
+    #[arg(short, long, value_delimiter = ',')]
+    ignore: Vec<String>,
 }
 
 fn main() -> io::Result<()> {
     let args: Args = Args::parse();
+    
+    // Convert ignore patterns to glob::Pattern
+    let ignore_patterns: Vec<Pattern> = args.ignore
+        .iter()
+        .filter_map(|p| Pattern::new(p).ok())
+        .collect();
 
-    let path = args.path;
-    let max_depth = args.depth;
-    let path_str = path.to_string_lossy().to_string();
+    // Handle glob patterns in path
+    let paths: Vec<PathBuf> = glob::glob(&args.path)
+        .expect("Failed to read glob pattern")
+        .filter_map(Result::ok)
+        .collect();
 
-    list_directories(path, max_depth, 0, &path_str).unwrap();
+    for path in paths {
+        let path_str = path.to_string_lossy().to_string();
+        list_directories(&path, args.depth, 0, &path_str, &ignore_patterns)?;
+    }
 
     Ok(())
 }
