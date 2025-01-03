@@ -85,6 +85,10 @@ fn is_executable(path: &PathBuf) -> bool {
     }
 }
 
+fn is_glob_pattern(pattern: &str) -> bool {
+    pattern.contains('*') || pattern.contains('?') || pattern.contains('{') || pattern.contains('[')
+}
+
 pub fn list_directories(
     path: &PathBuf,
     max_depth: usize,
@@ -100,14 +104,14 @@ pub fn list_directories(
                 let path = entry.path();
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-                if current_depth == 0 {
-                    !ignore_patterns.iter().any(|pattern| pattern.matches(name))
-                } else {
-                    !ignore_patterns.iter().any(|pattern| {
-                        let pattern_str = pattern.as_str();
-                        pattern_str.contains('/') && pattern.matches(&path.to_string_lossy())
-                    })
-                }
+                !ignore_patterns.iter().any(|pattern| {
+                    let pattern_str = pattern.as_str();
+                    if is_glob_pattern(pattern_str) {
+                        pattern.matches(&path.to_string_lossy())
+                    } else {
+                        current_depth == 0 && pattern.matches(name)
+                    }
+                })
             })
             .filter(|entry| !dirs_only || entry.path().is_dir())
             .collect();
