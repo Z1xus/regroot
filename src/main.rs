@@ -19,7 +19,7 @@ struct Args {
     ignore: Vec<String>,
 
     /// Show only directories
-    #[arg(short = 'd', long)]
+    #[arg(long)]
     dirs_only: bool,
 }
 
