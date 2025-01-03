@@ -7,6 +7,7 @@ pub fn list_directories(
     current_depth: usize,
     dir_path: &String,
     ignore_patterns: &[Pattern],
+    dirs_only: bool,
 ) -> io::Result<()> {
     if current_depth <= max_depth {
         let mut entries: Vec<_> = fs::read_dir(path)?
@@ -17,6 +18,7 @@ pub fn list_directories(
 
                 !ignore_patterns.iter().any(|pattern| pattern.matches(name))
             })
+            .filter(|entry| !dirs_only || entry.path().is_dir())
             .collect();
 
         entries.sort_by_key(|e| e.path());
@@ -54,6 +56,7 @@ pub fn list_directories(
                     current_depth + 1,
                     dir_path,
                     ignore_patterns,
+                    dirs_only,
                 )?;
             }
         }

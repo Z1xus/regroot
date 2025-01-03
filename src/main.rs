@@ -17,6 +17,10 @@ struct Args {
     /// Patterns to ignore (e.g., "node_modules", "*.pyc")
     #[arg(short, long, value_delimiter = ',')]
     ignore: Vec<String>,
+
+    /// Show only directories
+    #[arg(short = 'd', long)]
+    dirs_only: bool,
 }
 
 fn main() -> io::Result<()> {
@@ -37,7 +41,14 @@ fn main() -> io::Result<()> {
 
     for path in paths {
         let path_str = path.to_string_lossy().to_string();
-        list_directories(&path, args.depth, 0, &path_str, &ignore_patterns)?;
+        list_directories(
+            &path,
+            args.depth,
+            0,
+            &path_str,
+            &ignore_patterns,
+            args.dirs_only,
+        )?;
     }
 
     Ok(())
