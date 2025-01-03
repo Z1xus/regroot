@@ -1,6 +1,90 @@
 use glob::Pattern;
 use std::{fs, io, path::PathBuf};
 
+const RESET: &str = "\x1b[0m";
+const HIDDEN: &str = "\x1b[2m"; // Dim
+const DIR: &str = "\x1b[1;34m"; // Blue
+const SYMLINK: &str = "\x1b[36m"; // Cyan
+const EXECUTABLE: &str = "\x1b[32m"; // Green
+
+fn is_hidden(path: &PathBuf) -> bool {
+    let hidden_by_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .map(|name| name.starts_with('.'))
+        .unwrap_or(false);
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        hidden_by_name
+            || path
+                .metadata()
+                .map(|m| (m.file_attributes() & 0x2) != 0)
+                .unwrap_or(false)
+    }
+
+    #[cfg(not(windows))]
+    {
+        hidden_by_name
+    }
+}
+
+fn get_file_style(entry: &fs::DirEntry) -> &'static str {
+    let path = entry.path();
+
+    if is_hidden(&path) {
+        HIDDEN
+    } else if path.is_symlink() {
+        SYMLINK
+    } else if path.is_dir() {
+        DIR
+    } else if is_executable(&path) {
+        EXECUTABLE
+    } else {
+        RESET
+    }
+}
+
+fn is_executable(path: &PathBuf) -> bool {
+    let is_executable_ext = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| {
+            matches!(
+                ext.to_ascii_lowercase().as_str(),
+                "exe"
+                    | "bat"
+                    | "cmd"
+                    | "ps1"
+                    | "psd1"
+                    | "psm1"
+                    | "scr"
+                    | "msi"
+                    | "sh"
+                    | "bash"
+                    | "py"
+                    | "pl"
+            )
+        })
+        .unwrap_or(false);
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        is_executable_ext
+            || path
+                .metadata()
+                .map(|m| m.permissions().mode() & 0o111 != 0)
+                .unwrap_or(false)
+    }
+
+    #[cfg(not(unix))]
+    {
+        is_executable_ext
+    }
+}
+
 pub fn list_directories(
     path: &PathBuf,
     max_depth: usize,
@@ -15,7 +99,7 @@ pub fn list_directories(
             .filter(|entry| {
                 let path = entry.path();
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                
+
                 if current_depth == 0 {
                     !ignore_patterns.iter().any(|pattern| pattern.matches(name))
                 } else {
@@ -54,11 +138,12 @@ pub fn list_directories(
 
             let symbol = if is_last { "└── " } else { "├── " };
             let suffix = if path.is_dir() { "/" } else { "" };
+            let style = get_file_style(entry);
 
             if current_depth == 0 && i == 0 {
                 println!(".");
             }
-            println!("{}{}{}{}", prefix, symbol, name, suffix);
+            println!("{}{}{}{}{}{}", prefix, symbol, style, name, suffix, RESET);
 
             if path.is_dir() {
                 list_directories(
