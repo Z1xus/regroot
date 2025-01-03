@@ -1,16 +1,23 @@
 [package]
-name = "groot-tree"
+name = "regroot"
 version = "0.3.0"
 edition = "2021"
-description = "Walk in thee directories"
-authors = ["Community"]
-documentation = "https://github.com/rodrigorvsn/groot"
+authors = ["RodrigoRVSN", "z1xus"]
+description = "A modern, colorful directory tree viewer with glob pattern support"
+documentation = "https://github.com/z1xus/regroot"
+homepage = "https://github.com/z1xus/regroot"
+repository = "https://github.com/z1xus/regroot"
+readme = "README.md"
 license = "MIT"
-keywords = ["cli", "tree"]
-categories = ["cli", "tree"]
+keywords = ["tree", "directory", "filesystem", "cli", "glob"]
+categories = ["command-line-utilities", "filesystem", "development-tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 glob = "0.3"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
