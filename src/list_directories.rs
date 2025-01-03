@@ -15,7 +15,15 @@ pub fn list_directories(
             .filter(|entry| {
                 let path = entry.path();
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                !ignore_patterns.iter().any(|pattern| pattern.matches(name))
+                
+                if current_depth == 0 {
+                    !ignore_patterns.iter().any(|pattern| pattern.matches(name))
+                } else {
+                    !ignore_patterns.iter().any(|pattern| {
+                        let pattern_str = pattern.as_str();
+                        pattern_str.contains('/') && pattern.matches(&path.to_string_lossy())
+                    })
+                }
             })
             .filter(|entry| !dirs_only || entry.path().is_dir())
             .collect();
