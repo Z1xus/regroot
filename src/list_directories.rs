@@ -1,5 +1,8 @@
 use glob::Pattern;
-use std::{fs, io, path::PathBuf};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 const RESET: &str = "\x1b[0m";
 const HIDDEN: &str = "\x1b[2m"; // Dim
@@ -98,6 +101,20 @@ pub fn list_directories(
     dirs_only: bool,
 ) -> io::Result<()> {
     if current_depth <= max_depth {
+        if current_depth == 0 {
+            let root_name = if path == Path::new(".") {
+                std::env::current_dir()
+                    .ok()
+                    .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+                    .unwrap_or_else(|| ".".to_string())
+            } else {
+                path.file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| ".".to_string())
+            };
+            println!("{}{}/", DIR, root_name);
+        }
+
         let mut entries: Vec<_> = fs::read_dir(path)?
             .filter_map(|e| e.ok())
             .filter(|entry| {
@@ -144,9 +161,6 @@ pub fn list_directories(
             let suffix = if path.is_dir() { "/" } else { "" };
             let style = get_file_style(entry);
 
-            if current_depth == 0 && i == 0 {
-                println!(".");
-            }
             println!("{}{}{}{}{}{}", prefix, symbol, style, name, suffix, RESET);
 
             if path.is_dir() {
