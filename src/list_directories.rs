@@ -15,39 +15,42 @@ pub fn list_directories(
             .filter(|entry| {
                 let path = entry.path();
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-
                 !ignore_patterns.iter().any(|pattern| pattern.matches(name))
             })
             .filter(|entry| !dirs_only || entry.path().is_dir())
             .collect();
 
-        entries.sort_by_key(|e| e.path());
+        entries.sort_by_key(|e| {
+            let p = e.path();
+            (!p.is_dir(), p)
+        });
 
         for (i, entry) in entries.iter().enumerate() {
             let path = entry.path();
-            let dir = path.display().to_string();
-            let pure_name = dir.trim_start_matches(dir_path);
-            let pure_name = pure_name
-                .split('/')
-                .nth(current_depth + 1)
-                .unwrap_or(dir.as_str());
+            let is_last = i == entries.len() - 1;
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-            let symbol = if i == entries.len() - 1 {
-                "└── "
-            } else {
-                "├── "
-            };
-            let indent = if current_depth == 0 {
+            let prefix = if current_depth == 0 {
                 String::new()
             } else {
-                format!(
-                    "{}{}",
-                    "│   ".repeat(current_depth),
-                    "    ".repeat(current_depth.saturating_sub(1))
-                )
+                let mut prefix = String::new();
+                for d in 0..current_depth {
+                    if d == current_depth - 1 {
+                        prefix.push_str(if is_last { "    " } else { "│   " });
+                    } else {
+                        prefix.push_str("│   ");
+                    }
+                }
+                prefix
             };
 
-            println!("{}{}{}", indent, symbol, pure_name);
+            let symbol = if is_last { "└── " } else { "├── " };
+            let suffix = if path.is_dir() { "/" } else { "" };
+
+            if current_depth == 0 && i == 0 {
+                println!(".");
+            }
+            println!("{}{}{}{}", prefix, symbol, name, suffix);
 
             if path.is_dir() {
                 list_directories(
