@@ -1,6 +1,6 @@
 use clap::Parser;
-use std::{io, path::PathBuf};
 use glob::Pattern;
+use std::{io, path::PathBuf};
 
 pub mod list_directories;
 use list_directories::list_directories;
@@ -21,9 +21,10 @@ struct Args {
 
 fn main() -> io::Result<()> {
     let args: Args = Args::parse();
-    
+
     // Convert ignore patterns to glob::Pattern
-    let ignore_patterns: Vec<Pattern> = args.ignore
+    let ignore_patterns: Vec<Pattern> = args
+        .ignore
         .iter()
         .filter_map(|p| Pattern::new(p).ok())
         .collect();
